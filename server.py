@@ -5,11 +5,10 @@ from multiprocessing import Process
 
 
 class Server(Process):
-    def __init__(self, m, n):
+    def __init__(self, m):
         super().__init__()
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.m = m
-        self.n = n
 
     def connection(self):
         self.sock.bind(("127.0.0.1", 10001))
@@ -46,8 +45,7 @@ class Server(Process):
 
 
 if __name__ == "__main__":
-    n = int(input('Please input number of Processes: '))
     m = int(input('Please input number of Threadings: '))
-    serv = Server(m, n)
+    serv = Server(m)
     serv.start()
     serv.join()
