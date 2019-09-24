@@ -4,17 +4,33 @@ from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Process
 
 
-class Server(Process):
-    def __init__(self, m, n):
-        super().__init__()
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+class Server:
+    def __init__(self, m, num):
         self.m = m
-        self.n = n
-
-    def connection(self):
+        self.n = num
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind(("127.0.0.1", 10001))
         self.sock.listen(socket.SOMAXCONN)
+
+    def process(self):
+        all_processes = []
+        for i in range(self.n):
+            proc = Process(target=self.prom, args=())
+            all_processes.append(proc)
+            proc.start()
+
+        for i in range(self.n):
+            all_processes[i].join()
+
+    def prom(self):
         conn, addr = self.sock.accept()
+        self.threads(conn)
+
+    def threads(self, conn):
+        with ThreadPoolExecutor(max_workers=self.m) as pool:
+            results = [pool.submit(self.client(conn))]
+
+    def client(self, conn):
         conn.settimeout(8)
         while True:
             try:
@@ -40,14 +56,9 @@ class Server(Process):
             except socket.timeout:
                 break
 
-    def run(self):
-        with ThreadPoolExecutor(max_workers=self.m) as pool:
-            results = [pool.submit(self.connection())]
-
 
 if __name__ == "__main__":
-    n = int(input('Please input number of Processes: '))
     m = int(input('Please input number of Threadings: '))
+    n = int(input('Please input number of Processes: '))
     serv = Server(m, n)
-    serv.start()
-    serv.join()
+    serv.process()
